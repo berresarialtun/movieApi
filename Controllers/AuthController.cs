@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,90 +13,82 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using webapi.Helpers;
 using webapi.Models;
 using webapi.Repository;
+using webapi.ViewModel;
 
 namespace webapi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        readonly apiDbContext db;
-        private IConfiguration _config;
-        public AuthController(apiDbContext _db, IConfiguration config)
+        private readonly apiDbContext db;
+        private IConfiguration config;
+        private readonly IMapper mapper;
+        public AuthController(apiDbContext _db, IConfiguration _config, IMapper _mapper)
         {
             db = _db;
-            _config = config;
+            config = _config;
+            mapper = _mapper;
         }
    
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register([FromBody]User user)
+        public IActionResult Register([FromBody]RegisterVM registerUser)
         {
+            User user = mapper.Map< User >(registerUser);
             if (ModelState.IsValid)
             {
                 try
                 {
-                    await db.Users.AddAsync(user);
-                    await db.SaveChangesAsync();
+                    db.Users.Add(user);
+                    db.SaveChanges();
                     return Ok("Kullanıcı kaydedildi");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    return BadRequest();
+                    return BadRequest(ex.ToString());
                 }
 
             }
-            return BadRequest();
+            return BadRequest("Kullanıcı kaydedilemedi.");
         }
 
 
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] User User)
-        {
-           
-            User loginUser = db.Users.Where(x => x.username == User.username && x.password == User.password ).SingleOrDefault() ;
-            if (loginUser!=null)
+        public IActionResult Login([FromBody] LoginVM loginUser)
+        {     
+            var user = db.Users.Where(x => x.username == loginUser.username && x.password == loginUser.password ).SingleOrDefault() ;
+            if (user != null)
             {
                
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
                 var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
            
                 var claims = new[]
                 {
-                    new Claim(JwtRegisteredClaimNames.Sub, loginUser.name.ToString() ),
-                    new Claim(JwtRegisteredClaimNames.Jti, loginUser.Id.ToString() )
+                    new Claim(JwtRegisteredClaimNames.Sub, user.name.ToString() ),
+                    new Claim(JwtRegisteredClaimNames.Jti, user.Id.ToString() )
 
                 };
                 var token = new JwtSecurityToken(
-                    issuer: _config["Jwt:Issuer"],
-                    audience: _config["Jwt:Issuer"],
+                    issuer: config["Jwt:Issuer"],
+                    audience: config["Jwt:Issuer"],
                     claims,
                     expires: DateTime.Now.AddMinutes(120),
                     signingCredentials: credential
-                    );
+                );
 
                 var encodetoken = new JwtSecurityTokenHandler().WriteToken(token);
-              
-                return Ok(new { encodetoken });
+                //loginUser.userToken = encodetoken;
+                return Ok(encodetoken+"Giriş başarılı");
             }
             return BadRequest("hatalı giriş");
 
         }
-
-        [Authorize]
-        [Route("logout")]
-        public async Task<IActionResult> LogOut()
-        {
-
-            return Ok("Fdrgdf");
-
-        }
-
        
     }
 }

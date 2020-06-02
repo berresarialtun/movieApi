@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -7,32 +8,34 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using webapi.Models;
 using webapi.Repository;
+using webapi.ViewModel;
 
 namespace webapi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/movies")]
  
     public class MoviesController : ControllerBase
     {
-        readonly apiDbContext db;
-        IMovieRepository movieRepo;
-        public MoviesController(apiDbContext _db,IMovieRepository _movieRepo)
+        private readonly apiDbContext db;
+        private IMovieRepository movieRepo;
+        private IMapper mapper;
+        public MoviesController(apiDbContext _db,IMovieRepository _movieRepo,IMapper _mapper)
         {
             db = _db;
             movieRepo = _movieRepo;
+            mapper = _mapper;
+          
         }
 
 
         [Authorize]
         [HttpGet("{id}/review")]
-        public IActionResult GetReview(int Id)
+        public IActionResult GetReview(int id)
         {
-            
-           // string userName = User.FindFirst(ClaimTypes.Name)?.Value;
             try
             {
-                var Reviews = movieRepo.Reviews(Id);
+                var Reviews = movieRepo.Reviews(id);
                 if (Reviews == null)
                 {
                     return NotFound();
@@ -50,18 +53,17 @@ namespace webapi.Controllers
 
         [Authorize]
         [HttpPost("{MovieId}/review")]
-        public IActionResult PostReview(int MovieId,[FromBody]Review Review)
+        public IActionResult PostReview(int movieId,[FromBody]ReviewVM review)
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             IList<Claim> claims = identity.Claims.ToList();
-            var UserName = claims[0].Value;
-            var UserId = Convert.ToInt32( claims[1].Value);
-
+            var userName = claims[0].Value;
+            var userId = Convert.ToInt32( claims[1].Value);
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var reviews =  movieRepo.PostReview(Review, MovieId,UserId);
+                    var reviews =  movieRepo.PostReview(review, movieId, userId);
                     if (reviews == null)
                     {
                         return NotFound();
