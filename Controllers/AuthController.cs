@@ -70,8 +70,8 @@ namespace webapi.Controllers
            
                 var claims = new[]
                 {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.name.ToString() ),
-                    new Claim(JwtRegisteredClaimNames.Jti, user.Id.ToString() )
+                    new Claim(JwtRegisteredClaimNames.UniqueName, user.name.ToString() ),
+                    new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString() )
 
                 };
                 var token = new JwtSecurityToken(

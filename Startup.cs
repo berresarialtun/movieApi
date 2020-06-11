@@ -29,35 +29,6 @@ namespace webapi
 
 
             var key = Encoding.ASCII.GetBytes(Configuration["Jwt:Key"]);
-            /*  services.AddAuthentication(x =>
-              {
-                  x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                  x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-              })
-              .AddJwtBearer(x =>
-              {
-                  x.RequireHttpsMetadata = false;
-                  x.SaveToken = true;
-                  x.TokenValidationParameters = new TokenValidationParameters
-                  {
-                      ValidateIssuerSigningKey = true,
-                      IssuerSigningKey = new SymmetricSecurityKey(key),
-                      ValidateIssuer = false,
-                      ValidateAudience = false
-                  };
-              });*/
-
-
-            /* services.AddCors(options =>
-             {
-                 options.AddPolicy("CorsPolicy", builder =>
-                  builder
-                  .AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials()
-                  .Build()); 
-             });*/
             services.AddControllers();
             services.AddControllers().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 

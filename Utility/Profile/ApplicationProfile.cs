@@ -13,10 +13,15 @@ namespace webapi.Utility.Profile
         {
             CreateMap<User, LoginVM>();
             CreateMap<LoginVM, User>();
+
             CreateMap<User, RegisterVM>();
             CreateMap<RegisterVM, User>();
+
             CreateMap<ReviewVM, Review>();
             CreateMap<Review, ReviewVM>();
+
+            CreateMap<User, UserVM>();
+            CreateMap<UserVM, User>();
         }
     }
 }
